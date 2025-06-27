@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#
+#  bsusdd The bsusd more server.
+#
+#
+# chkconfig: 345 80 20
+# description: bsusdd
+# processname: bsusdd
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+# you can override defaults in /etc/sysconfig/bsusdd, see below
+if [ -f /etc/sysconfig/bsusdd ]; then
+        . /etc/sysconfig/bsusdd
+fi
+
+RETVAL=0
+
+prog=bsusdd
+# you can override the lockfile via BLACKMORED_LOCKFILE in /etc/sysconfig/bsusdd
+lockfile=${BLACKMORED_LOCKFILE-/var/lock/subsys/bsusdd}
+
+# bsusdd defaults to /usr/bin/bsusdd, override with BLACKMORED_BIN
+bsusdd=${BLACKMORED_BIN-/usr/bin/bsusdd}
+
+# bsusdd opts default to -disablewallet, override with BLACKMORED_OPTS
+bsusdd_opts=${BLACKMORED_OPTS--disablewallet}
+
+start() {
+    echo -n $"Starting $prog: "
+    daemon $DAEMONOPTS $bitcoind $bitcoind_opts
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $lockfile
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc $prog -t600
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $lockfile
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $prog
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: service $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
